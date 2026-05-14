@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Şifre Güvenlik Testi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #eef6ff, #ffffff);
+      color: #123;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 22px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+      padding: 28px;
+      border: 2px solid #d8e8ff;
+    }
+    h1 {
+      margin: 0;
+      text-align: center;
+      color: #0b3c78;
+      font-size: 34px;
+    }
+    .subtitle {
+      text-align: center;
+      margin: 8px 0 24px;
+      color: #345;
+      font-size: 17px;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 6px solid #f0ad00;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    input {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid #9fc5f8;
+      border-radius: 14px;
+      font-size: 20px;
+      outline: none;
+    }
+    button {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 14px;
+      background: #0b66c3;
+      color: white;
+      font-size: 17px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover { background: #084f96; }
+    .result {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 20px 0;
+    }
+    .box {
+      background: #f4f9ff;
+      border: 1px solid #cfe3ff;
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+    }
+    .box h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: #0b3c78;
+    }
+    .big {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0b66c3;
+    }
+    .bar {
+      height: 18px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: #ef4444;
+      transition: 0.4s;
+    }
+    .advice {
+      background: #f8fbff;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px dashed #8bbcff;
+    }
+    .advice h2 { margin-top: 0; color: #0b3c78; }
+    li { margin: 7px 0; }
+    .footer {
+      text-align: center;
+      margin-top: 18px;
+      color: #567;
+      font-size: 14px;
+    }
+    @media (max-width: 700px) {
+      .input-row, .result { grid-template-columns: 1fr; display: grid; }
+      button { width: 100%; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔐 Şifre Güvenlik Testi</h1>
+    <p class="subtitle">“Bu Şifre Kaç Saniyede/Yılda Kırılır?” Eğitsel Uygulaması V1.0</p>
+
+    <div class="warning">
+      ⚠️ Gerçek şifrenizi asla yazmayın! Bu uygulama sadece örnek/sahte şifrelerle eğitim amaçlı kullanılmalıdır.
+    </div>
+
+    <div class="input-row">
+      <input id="password" type="text" placeholder="Örnek şifre yazın: HT.TüBiT@K26" oninput="analyzePassword()" />
+      <button onclick="clearInput()">Temizle</button>
+    </div>
+
+    <div class="result">
+      <div class="box">
+        <h3>Güvenlik Puanı</h3>
+        <div class="big" id="score">0 / 100</div>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+      </div>
+      <div class="box">
+        <h3>Tahmini Kırılma Süresi</h3>
+        <div class="big" id="time">-</div>
+      </div>
+      <div class="box">
+        <h3>Seviye</h3>
+        <div class="big" id="level">-</div>
+      </div>
+    </div>
+
+    <div class="advice">
+      <h2>Sonuç ve Öneriler</h2>
+      <ul id="tips">
+        <li>Şifreyi yazmaya başlayınca öneriler burada görünecek.</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      Not: Süreler yaklaşık ve eğitim amaçlıdır. Gerçek saldırı süresi kullanılan sisteme, saldırı yöntemine ve güvenlik önlemlerine göre değişebilir.
+    </div>
+  </div>
+
+  <script>
+    const commonPasswords = [
+      "123456", "123456789", "password", "qwerty", "12345678", "111111", "000000",
+      "123123", "1234", "admin", "asdfgh", "iloveyou", "dogumtarihi", "adsoyad", "turkiye"
+    ];
+
+    function analyzePassword() {
+      const pwd = document.getElementById("password").value;
+      const length = pwd.length;
+      const hasLower = /[a-z]/.test(pwd);
+      const hasUpper = /[A-ZÇĞİÖŞÜ]/.test(pwd);
+      const hasNumber = /[0-9]/.test(pwd);
+      const hasSymbol = /[^a-zA-Z0-9ÇĞİÖŞÜçğıöşü]/.test(pwd);
+      const hasPersonalPattern = /(123|abc|qwerty|ad|soyad|dogum|doğum|isim|2000|2005|2010|2020)/i.test(pwd);
+      const isCommon = commonPasswords.includes(pwd.toLowerCase());
+
+      let pool = 0;
+      if (hasLower) pool += 26;
+      if (hasUpper) pool += 29;
+      if (hasNumber) pool += 10;
+      if (hasSymbol) pool += 32;
+      if (pool === 0) pool = 1;
+
+      let combinations = Math.pow(pool, length);
+      let guessesPerSecond = 100000000; // eğitim amaçlı varsayım
+      let seconds = combinations / guessesPerSecond;
+
+      if (isCommon) seconds = 0.01;
+      if (hasPersonalPattern && seconds > 10) seconds = seconds / 50;
+
+      let score = 0;
+      score += Math.min(length * 6, 45);
+      score += hasLower ? 10 : 0;
+      score += hasUpper ? 10 : 0;
+      score += hasNumber ? 10 : 0;
+      score += hasSymbol ? 15 : 0;
+      score -= hasPersonalPattern ? 15 : 0;
+      score -= isCommon ? 40 : 0;
+      score = Math.max(0, Math.min(100, Math.round(score)));
+
+      let level = "Zayıf";
+      let color = "#ef4444";
+      if (score >= 75) { level = "Güçlü"; color = "#16a34a"; }
+      else if (score >= 50) { level = "Orta"; color = "#f59e0b"; }
+
+      document.getElementById("score").textContent = score + " / 100";
+      document.getElementById("fill").style.width = score + "%";
+      document.getElementById("fill").style.background = color;
+      document.getElementById("time").textContent = formatTime(seconds);
+      document.getElementById("level").textContent = level;
+      document.getElementById("level").style.color = color;
+
+      const tips = [];
+      if (pwd.length === 0) tips.push("Şifreyi yazmaya başlayınca öneriler burada görünecek.");
+      if (length > 0 && length < 12) tips.push("Şifrenizi en az 12 karakter yapmaya çalışın.");
+      if (!hasUpper && length > 0) tips.push("Büyük harf ekleyin.");
+      if (!hasLower && length > 0) tips.push("Küçük harf ekleyin.");
+      if (!hasNumber && length > 0) tips.push("Rakam ekleyin.");
+      if (!hasSymbol && length > 0) tips.push("Sembol ekleyin: !, ?, #, %, & gibi.");
+      if (hasPersonalPattern) tips.push("Kişisel bilgi, ardışık sayı veya kolay tahmin edilen kelimeler kullanmayın.");
+      if (isCommon) tips.push("Bu çok yaygın bir şifre örneğidir. Kesinlikle kullanılmamalıdır.");
+      if (score >= 75) tips.push("Güçlü görünüyor. Yine de gerçek şifrenizi kimseyle paylaşmayın ve iki adımlı doğrulama kullanın.");
+
+      document.getElementById("tips").innerHTML = tips.map(t => `<li>${t}</li>`).join("");
+    }
+
+    function formatTime(seconds) {
+      if (!isFinite(seconds) || seconds <= 0) return "Anında";
+      if (seconds < 1) return "1 saniyeden az";
+      if (seconds < 60) return Math.round(seconds) + " saniye";
+      if (seconds < 3600) return Math.round(seconds / 60) + " dakika";
+      if (seconds < 86400) return Math.round(seconds / 3600) + " saat";
+      if (seconds < 31536000) return Math.round(seconds / 86400) + " gün";
+      const years = seconds / 31536000;
+      if (years < 1000) return Math.round(years) + " yıl";
+      if (years < 1000000) return Math.round(years / 1000) + " bin yıl";
+      if (years < 1000000000) return Math.round(years / 1000000) + " milyon yıl";
+      return "milyarlarca yıl";
+    }
+
+    function clearInput() {
+      document.getElementById("password").value = "";
+      analyzePassword();
+    }
+
+    analyzePassword();
+  </script>
+</body>
+</html>
